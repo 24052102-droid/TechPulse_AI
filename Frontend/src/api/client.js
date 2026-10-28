@@ -1,5 +1,8 @@
-const RAW_URL = import.meta.env.VITE_API_BASE_URL || "/api";
-const BASE_URL = RAW_URL.replace(/\/+$/, "");
+let RAW_URL = (import.meta.env.VITE_API_BASE_URL || "/api").trim().replace(/\/+$/, "");
+if ((RAW_URL.startsWith("http://") || RAW_URL.startsWith("https://")) && !RAW_URL.endsWith("/api")) {
+  RAW_URL = `${RAW_URL}/api`;
+}
+const BASE_URL = RAW_URL;
 
 async function request(endpoint, options = {}) {
   const url = `${BASE_URL}${endpoint}`;

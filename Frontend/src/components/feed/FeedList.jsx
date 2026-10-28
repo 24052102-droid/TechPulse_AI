@@ -90,7 +90,7 @@ export function FeedList() {
               Unable to load feed data from backend.
             </p>
             <p className="font-code-sm text-code-sm text-secondary mb-4">
-              {feedError}. Make sure the FastAPI server is running on http://127.0.0.1:8000.
+              {feedError}. Verify your backend connection or make sure the FastAPI server is running.
             </p>
             <button
               type="button"

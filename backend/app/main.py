@@ -59,8 +59,9 @@ async def add_process_time_header(request: Request, call_next):
     return response
 
 
-# Mount API routers under /api
+# Mount API routers under /api (standard) and directly at root (graceful fallback)
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+app.include_router(api_router)
 
 
 @app.get("/")
