@@ -1,0 +1,31 @@
+name: Production Watchdog & Keep-Alive
+
+on:
+  schedule:
+    # Run every 10 minutes to prevent Render free-tier instance from sleeping
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-health:
+    name: Ping Production Backend Health
+    runs-on: ubuntu-latest
+    steps:
+      - name: Health Check Ping
+        run: |
+          BACKEND_URL="${{ secrets.RENDER_BACKEND_URL }}"
+          if [ -z "$BACKEND_URL" ]; then
+            echo "RENDER_BACKEND_URL secret not set. Skipping ping."
+            exit 0
+          fi
+          # Strip trailing slashes
+          CLEAN_URL="${BACKEND_URL%/}"
+          echo "Pinging: ${CLEAN_URL}/api/health..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "${CLEAN_URL}/api/health" || echo "000")
+          echo "Response code: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "::warning::Backend health check returned status $HTTP_STATUS"
+          else
+            echo "✅ Backend is warm and healthy (200 OK)."
+          fi
+

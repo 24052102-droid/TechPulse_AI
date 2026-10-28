@@ -1,0 +1,102 @@
+name: CI Pipeline (FastAPI, ML Inference & React)
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─── Job 1: Frontend Verification ───
+  frontend:
+    name: Frontend Build & Type Validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Frontend
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: Frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build React Application
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: "/api"
+
+  # ─── Job 2: Backend & ML Engine Validation ───
+  backend:
+    name: Backend Tests & ML Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest httpx
+
+      - name: Verify ML Model Files Present
+        run: |
+          python -c "
+          from pathlib import Path
+          required = [
+              'models/paper_impact_xgb_v1.pkl',
+              'models/repo_growth_xgb_v1.pkl',
+              'models/domain_trend_logreg_v1.pkl',
+              'models/domain_classifier_config.json'
+          ]
+          for f in required:
+              p = Path(f)
+              assert p.exists(), f'Missing model artifact: {f}'
+              print(f'✅ Found {f} ({p.stat().st_size} bytes)')
+          "
+
+      - name: Run Automated Test Suite
+        run: pytest backend/tests -v
+        env:
+          DATABASE_URL: "sqlite:///./test_ci.db"
+          ENVIRONMENT: "testing"
+          DEBUG: "False"
+
+  # ─── Job 3: Docker Build Verification ───
+  docker:
+    name: Dockerfile Build Verification
+    runs-on: ubuntu-latest
+    needs: [backend]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: techpulse-backend:test
+
