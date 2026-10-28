@@ -55,7 +55,7 @@ export function ItemDetailPage({ itemId }) {
     );
   }
 
-  const { item, classification, prediction, insights } = data;
+  const { item, classification, prediction, insight } = data;
   const meta = item.metadata || {};
   const hasCodeLink = meta.has_code || meta.github_repo_url;
 
@@ -142,7 +142,7 @@ export function ItemDetailPage({ itemId }) {
           {/* Left Column (60% width): Evidence & Synthesis */}
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-5 shadow-sm">
-              <FullInsightCard item={item} insight={insights} />
+              <FullInsightCard item={item} insight={insight} />
             </div>
             <div className="bg-surface-container-lowest border border-outline-variant/50 rounded-xl p-5 shadow-sm">
               <MetadataTable item={item} />

@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     REDIS_FEED_CACHE_TTL: int = 300  # 5 minutes
     
     # External APIs
+    GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "openai/gpt-oss-120b"
     ANTHROPIC_API_KEY: str = ""
     GITHUB_PAT: str = ""
     SEMANTIC_SCHOLAR_API_KEY: str = ""

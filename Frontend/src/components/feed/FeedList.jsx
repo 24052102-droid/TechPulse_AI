@@ -13,12 +13,18 @@ export function FeedList() {
     setSortBy,
     setPage,
     isLoading,
+    feedError,
+    loadFeed,
   } = useFeedStore();
 
-  const domainCount = selectedDomains.length > 0 ? selectedDomains.length : 3;
-  const displayTotal = total > 0 ? total : 142;
-  const startIdx = items.length > 0 ? (page - 1) * 20 + 1 : 1;
-  const endIdx = items.length > 0 ? Math.min(startIdx + items.length - 1, displayTotal) : 3;
+  const domainCount = selectedDomains.length;
+  const domainText =
+    domainCount > 0
+      ? `across ${domainCount} selected domain${domainCount > 1 ? "s" : ""}`
+      : "across all domains";
+  const displayTotal = total;
+  const startIdx = items.length > 0 ? (page - 1) * 20 + 1 : 0;
+  const endIdx = items.length > 0 ? Math.min(startIdx + items.length - 1, displayTotal) : 0;
 
   return (
     <div>
@@ -29,11 +35,7 @@ export function FeedList() {
           <span className="font-code-sm text-code-sm text-on-surface font-semibold">
             {displayTotal}
           </span>{" "}
-          high-signal items across{" "}
-          <span className="font-code-sm text-code-sm text-on-surface font-semibold">
-            {domainCount}
-          </span>{" "}
-          selected domains
+          high-signal items {domainText}
         </div>
 
         {/* Segmented Sort Toggle */}
@@ -82,6 +84,22 @@ export function FeedList() {
               Streaming real-time technical intelligence...
             </span>
           </div>
+        ) : feedError && items.length === 0 ? (
+          <div className="p-8 text-center bg-surface border border-red-200 dark:border-red-900/40 rounded-xl">
+            <p className="font-body-md text-body-md text-red-600 dark:text-red-400 font-medium mb-1">
+              Unable to load feed data from backend.
+            </p>
+            <p className="font-code-sm text-code-sm text-secondary mb-4">
+              {feedError}. Make sure the FastAPI server is running on http://127.0.0.1:8000.
+            </p>
+            <button
+              type="button"
+              onClick={() => loadFeed()}
+              className="px-4 py-1.5 rounded bg-primary text-on-primary font-body-sm text-body-sm hover:opacity-90 transition-opacity"
+            >
+              Retry Connection
+            </button>
+          </div>
         ) : items.length > 0 ? (
           items.map((item, index) => (
             <ItemCard
@@ -102,7 +120,9 @@ export function FeedList() {
       {/* End of Feed Pagination Indicator */}
       <div className="mt-8 pt-4 border-t border-outline-variant/30 flex items-center justify-between text-body-sm">
         <span className="font-code-sm text-code-sm text-secondary">
-          Showing {startIdx}–{endIdx} of {displayTotal} items
+          {displayTotal > 0
+            ? `Showing ${startIdx}–${endIdx} of ${displayTotal} items`
+            : "0 items"}
         </span>
         <div className="flex items-center gap-2">
           <button

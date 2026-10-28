@@ -14,6 +14,7 @@ export const useFeedStore = create((set, get) => ({
   pages: 1,
   hasNext: false,
   isLoading: false,
+  feedError: null,
 
   // Filter & Sort State
   selectedDomains: [],
@@ -82,7 +83,7 @@ export const useFeedStore = create((set, get) => ({
 
   loadFeed: async () => {
     const { selectedDomains, selectedSource, sortBy, page, searchQuery } = get();
-    set({ isLoading: true });
+    set({ isLoading: true, feedError: null });
     try {
       if (searchQuery.trim().length > 1) {
         const res = await api.search({
@@ -97,6 +98,7 @@ export const useFeedStore = create((set, get) => ({
           pages: Math.max(1, Math.ceil((res.total || 0) / 20)),
           hasNext: false,
           isLoading: false,
+          feedError: null,
         });
       } else {
         const res = await api.getFeed({
@@ -113,11 +115,12 @@ export const useFeedStore = create((set, get) => ({
           pages: res.pages || 1,
           hasNext: res.has_next || false,
           isLoading: false,
+          feedError: null,
         });
       }
     } catch (err) {
       console.error("Failed to load feed:", err);
-      set({ isLoading: false });
+      set({ isLoading: false, feedError: err.message || "Failed to load feed from backend" });
     }
   },
 }));

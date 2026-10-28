@@ -8,6 +8,8 @@ import { TechRadarMatrix } from "../components/trends/TechRadarMatrix";
 export function TrendsPage() {
   const [window, setWindow] = useState("7d");
   const [trends, setTrends] = useState([]);
+  const [allDomains, setAllDomains] = useState([]);
+  const [topRisingDomains, setTopRisingDomains] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,6 +18,8 @@ export function TrendsPage() {
       try {
         const res = await api.getTrends(window);
         setTrends(res.trends || []);
+        setAllDomains(res.all_domains || []);
+        setTopRisingDomains(res.top_rising_domains || []);
       } catch (err) {
         console.error("Failed to load trends:", err);
       } finally {
@@ -25,17 +29,23 @@ export function TrendsPage() {
     load();
   }, [window]);
 
-  // Aggregate current metrics per domain
+  // Aggregate current metrics per domain fallback
   const domainMap = {};
   trends.forEach((t) => {
     if (!domainMap[t.domain] || t.date > domainMap[t.domain].date) {
       domainMap[t.domain] = t;
     }
   });
-  const latestDomains = Object.values(domainMap).sort(
-    (a, b) => (b.wow_delta || 0) - (a.wow_delta || 0)
-  );
-  const topRising = latestDomains.slice(0, 3);
+  const latestDomains =
+    allDomains.length > 0
+      ? allDomains
+      : Object.values(domainMap).sort(
+          (a, b) => (b.wow_delta || 0) - (a.wow_delta || 0)
+        );
+  const topRising =
+    topRisingDomains.length > 0
+      ? topRisingDomains
+      : latestDomains.slice(0, 3);
 
   return (
     <section className="flex-1 bg-surface-container-lowest px-8 py-6 min-h-screen">

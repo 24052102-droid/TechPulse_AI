@@ -20,23 +20,44 @@ export function InsightPanel({ itemId, isOpen, onCollapse, fallbackContent }) {
       try {
         const res = await api.getInsights(itemId);
         if (res.status === "ready" && isMounted) {
-          setInsight(res.data);
+          setInsight(res.insight);
           setLoading(false);
         } else if (res.status === "processing") {
+          let attempts = 0;
           pollInterval = setInterval(async () => {
+            attempts++;
+            if (attempts > 8) {
+              clearInterval(pollInterval);
+              if (isMounted) {
+                setError("Insight synthesis took too long. Click to retry.");
+                setLoading(false);
+              }
+              return;
+            }
             try {
               const pollRes = await api.getInsights(itemId);
               if (pollRes.status === "ready" && isMounted) {
-                setInsight(pollRes.data);
+                setInsight(pollRes.insight);
+                setLoading(false);
+                clearInterval(pollInterval);
+              } else if (pollRes.status === "failed" && isMounted) {
+                setError("Insight generation could not be completed for this item.");
                 setLoading(false);
                 clearInterval(pollInterval);
               }
             } catch (pErr) {
               clearInterval(pollInterval);
+              if (isMounted) {
+                setError("Connection lost while waiting for insights.");
+                setLoading(false);
+              }
             }
           }, 2500);
         } else if (fallbackContent && isMounted) {
           setInsight(fallbackContent);
+          setLoading(false);
+        } else if (isMounted) {
+          setError("Insight generation status: " + (res.status || "unavailable"));
           setLoading(false);
         }
       } catch (err) {
@@ -60,31 +81,40 @@ export function InsightPanel({ itemId, isOpen, onCollapse, fallbackContent }) {
 
   if (!isOpen) return null;
 
-  // Default content matching Stitch specifications if live insight is loading fallback
-  const content = insight || fallbackContent || {
-    technical_depth: "Intermediate Depth",
-    estimated_read_time: 8,
-    llm_model: "Claude 3.5 Sonnet",
-    summary:
-      "Introduces a hardware-aware routing mechanism for Mixture-of-Experts models that cuts memory bandwidth overhead by 42% on consumer GPUs without degrading ImageNet/MMLU benchmark accuracy. By restructuring routing tokens into static capacity-constrained clusters, the method avoids unpredictable buffer stalls during speculative decoding. Empirically validates sub-linear activation memory across 16-expert and 64-expert configurations.",
-    key_takeaways: [
-      "Replaces top-k token routing with static capacity-constrained expert blocks, yielding 1.8× faster inference.",
-      "Open-source PyTorch & Triton kernels provided with verified FP8 support.",
-      "Achieves 38 tokens/sec on a single RTX 4090 with 4-bit activation quantization.",
-    ],
-    why_it_matters:
-      "Bridges the critical deployment gap between multi-hundred-billion parameter MoE architectures and edge or single-node workstation GPUs, making state-of-the-art reasoning models accessible without multi-node clusters.",
-    related_topics: ["MoE", "TritonKernels", "EdgeInference"],
-  };
+  // Use fetched insight or passed-in fallback; show loading/error if neither is available
+  const content = insight || fallbackContent || null;
 
-  const depthLabel =
-    content.technical_depth?.includes("Depth")
+  if (!content && !loading) {
+    return (
+      <div className="mt-4 pt-4 border-t border-dashed border-outline-variant/60 bg-surface -mx-5 -mb-5 p-5 rounded-b-xl">
+        <p className="font-body-sm text-body-sm text-secondary italic">
+          {error || "AI insights are not yet available for this item. Click to retry."}
+        </p>
+        <button
+          type="button"
+          onClick={onCollapse}
+          className="mt-2 px-2.5 py-1 rounded bg-primary text-on-primary font-code-sm text-code-sm font-medium hover:bg-surface-tint transition-colors flex items-center gap-1"
+        >
+          <span>✦</span> Collapse Insights ▴
+        </button>
+      </div>
+    );
+  }
+
+  if (!content) {
+    // Still loading — will render the skeleton below
+  }
+
+  const depthLabel = content
+    ? content.technical_depth?.includes("Depth")
       ? content.technical_depth
-      : `${content.technical_depth || "Intermediate"} Depth`;
+      : `${content.technical_depth || "Intermediate"} Depth`
+    : "Loading…";
 
   return (
     <div className="mt-4 pt-4 border-t border-dashed border-outline-variant/60 bg-surface -mx-5 -mb-5 p-5 rounded-b-xl">
       {/* Meta Bar */}
+      {content && (
       <div className="flex items-center justify-between mb-3 text-body-sm flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 rounded bg-[#F5F3FF] text-[#5B21B6] border border-[#DDD6FE] font-code-sm text-code-sm font-semibold capitalize">
@@ -96,11 +126,12 @@ export function InsightPanel({ itemId, isOpen, onCollapse, fallbackContent }) {
         </div>
         <div className="flex items-center gap-1.5 font-code-sm text-code-sm text-secondary">
           <span className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6]"></span>
-          <span>{content.llm_model ? `${content.llm_model} Synthesis` : "Claude 3.5 Sonnet Synthesis"}</span>
+          <span>{content.llm_model ? `${content.llm_model} Synthesis` : "AI Synthesis"}</span>
         </div>
       </div>
+      )}
 
-      {loading && !insight && !fallbackContent ? (
+      {loading && !content ? (
         <div className="py-4 space-y-2 animate-pulse">
           <div className="h-3.5 bg-surface-container rounded w-5/6"></div>
           <div className="h-3.5 bg-surface-container rounded w-4/6"></div>
@@ -137,7 +168,7 @@ export function InsightPanel({ itemId, isOpen, onCollapse, fallbackContent }) {
           {/* Footer Row */}
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-outline-variant/30 flex-wrap gap-2">
             <div className="flex items-center gap-1.5 flex-wrap">
-              {(content.related_topics || ["MoE", "TritonKernels", "EdgeInference"]).map(
+              {(content.related_topics || []).map(
                 (topic, idx) => (
                   <span
                     key={idx}

@@ -15,13 +15,16 @@ LLM_MODEL_NAME = "claude-3-5-sonnet-20241022"
 class LLMService:
     """
     LLM synthesis service generating structured technical intelligence insight cards.
-    Enforces Redis caching (NFR-06), strict JSON validation, and graceful local synthesis
-    when external API keys are unavailable.
+    Prioritizes ultra-fast Groq LPU inference, falls back to Anthropic API if configured,
+    and maintains a deterministic local heuristic synthesizer to guarantee 100% uptime.
+    Enforces Redis caching (NFR-06) and strict JSON validation.
     """
 
     def __init__(self):
-        self.api_key = settings.ANTHROPIC_API_KEY
-        self.model_version = LLM_MODEL_NAME
+        self.groq_api_key = settings.GROQ_API_KEY
+        self.groq_model = settings.GROQ_MODEL or "openai/gpt-oss-120b"
+        self.anthropic_api_key = settings.ANTHROPIC_API_KEY
+        self.model_version = f"groq-{self.groq_model}" if self.groq_api_key else LLM_MODEL_NAME
 
     def generate_insight(
         self,
@@ -41,22 +44,97 @@ class LLMService:
             logger.debug("Redis cache hit for insight: %s", source_id)
             return cached
 
-        # 2. Generate via Anthropic API if key is present
         insight_data = None
-        if self.api_key and self.api_key.startswith("sk-"):
+
+        # 2. Priority 1: High-speed Groq LPU inference
+        if self.groq_api_key and self.groq_api_key.startswith("gsk_"):
+            insight_data = self._call_groq_api(title, description, source, primary_domain)
+
+        # 3. Priority 2: Anthropic API if key is present
+        if not insight_data and self.anthropic_api_key and self.anthropic_api_key.startswith("sk-"):
             insight_data = self._call_anthropic_api(title, description, source, primary_domain)
 
-        # 3. Fallback to deterministic NLP heuristic synthesizer if API unavailable
+        # 4. Fallback to deterministic NLP heuristic synthesizer if API unavailable
         if not insight_data:
             insight_data = self._synthesize_local_insight(title, description, source, primary_domain)
 
-        # 4. Cache indefinitely in Redis
+        # 5. Cache indefinitely in Redis
         cache_client.set_json(cache_key, insight_data, ex=None)
         return insight_data
 
     def _compute_cache_key(self, source_id: str) -> str:
         h = hashlib.sha256(f"{source_id}:{self.model_version}".encode("utf-8")).hexdigest()
         return f"llm:insight:{h}"
+
+    def _call_groq_api(
+        self, title: str, description: str, source: str, primary_domain: str
+    ) -> Optional[dict]:
+        """
+        Calls Groq Chat Completions API with OpenAI-compatible JSON schema.
+        Ultra-low latency inference via Groq LPU.
+        """
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.groq_api_key}",
+            "Content-Type": "application/json",
+        }
+
+        system_prompt = (
+            "You are a senior technical analyst in machine learning and software engineering. "
+            "Generate a structured intelligence insight card for the technical item. "
+            "Respond ONLY with a valid JSON object strictly conforming to this schema:\n"
+            "{\n"
+            '  "summary": "3-sentence plain-English summary",\n'
+            '  "key_takeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3"],\n'
+            '  "why_it_matters": "1-paragraph significance statement",\n'
+            '  "technical_depth": "beginner | intermediate | advanced",\n'
+            '  "estimated_read_time": 5,\n'
+            '  "related_topics": ["topic1", "topic2", "topic3"]\n'
+            "}"
+        )
+
+        user_content = (
+            f"Title: {title}\n"
+            f"Source: {source.upper()}\n"
+            f"Domain: {primary_domain}\n"
+            f"Content:\n{description[:1800]}"
+        )
+
+        payload = {
+            "model": self.groq_model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            "max_tokens": 700,
+            "temperature": 0.2,
+        }
+
+        try:
+            resp = requests.post(url, headers=headers, json=payload, timeout=20)
+            if resp.status_code == 200:
+                body = resp.json()
+                raw_text = body["choices"][0]["message"].get("content", "").strip()
+                if raw_text.startswith("```json"):
+                    raw_text = raw_text[7:]
+                if raw_text.startswith("```"):
+                    raw_text = raw_text[3:]
+                if raw_text.endswith("```"):
+                    raw_text = raw_text[:-3]
+                raw_text = raw_text.strip()
+
+                parsed = json.loads(raw_text)
+                if "estimated_read_time_minutes" in parsed and "estimated_read_time" not in parsed:
+                    parsed["estimated_read_time"] = parsed["estimated_read_time_minutes"]
+                parsed["llm_model"] = f"groq/{self.groq_model}"
+                logger.info("Successfully synthesized insight via Groq (%s)", self.groq_model)
+                return parsed
+            else:
+                logger.warning("Groq API returned status %d: %s", resp.status_code, resp.text)
+        except Exception as e:
+            logger.error("Groq API call failed: %s", e)
+
+        return None
 
     def _call_anthropic_api(
         self, title: str, description: str, source: str, primary_domain: str

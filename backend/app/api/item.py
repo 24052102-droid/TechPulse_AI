@@ -87,6 +87,19 @@ def get_item_insights(item_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Item not found")
 
     ins = item.insight
+    if not ins:
+        try:
+            from backend.app.services.llm_service import LLMService
+            from backend.app.tasks.insights import _generate_and_save_insight
+            llm_service = LLMService()
+            _generate_and_save_insight(db, item, llm_service)
+            db.commit()
+            db.refresh(item)
+            ins = item.insight
+        except Exception as e:
+            db.rollback()
+            logger.error("On-demand insight generation failed for item %s: %s", item_id, e)
+
     if ins:
         return InsightStatusResponse(
             status="ready",
@@ -104,7 +117,7 @@ def get_item_insights(item_id: str, db: Session = Depends(get_db)):
             ),
         )
 
-    # If not yet generated, return processing status (would trigger celery task in full queue)
+    # Fallback status if synthesis failed
     return InsightStatusResponse(
         status="processing",
         item_id=item_id,

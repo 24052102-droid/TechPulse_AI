@@ -46,23 +46,39 @@ export function FullInsightCard({ item, insight }) {
         </div>
       )}
 
-      {/* Limitations & Research Gaps (Opportunity Detector) */}
-      <div className="glass-panel p-6 rounded-2xl border-amber-500/20 bg-gradient-to-b from-obsidian-850 to-obsidian-900">
-        <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider mb-3">
-          <AlertCircle className="w-4 h-4" />
-          <span>Limitations & Candidate Research Gaps</span>
+      {/* Technical Profile & Synthesis Metadata */}
+      {insight && (
+        <div className="glass-panel p-6 rounded-2xl border-outline-variant/40">
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Technical Profile &amp; Taxonomy
+            </span>
+            <span className="font-code-sm text-code-sm text-secondary">
+              {insight.llm_model ? `Synthesized by ${insight.llm_model}` : "AI Synthesis"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap mb-3">
+            <span className="px-2.5 py-1 rounded bg-[#EEF2FF] text-[#3730A3] font-code-sm text-code-sm font-semibold capitalize">
+              {insight.technical_depth || "Intermediate"} Depth
+            </span>
+            <span className="px-2.5 py-1 rounded bg-surface-container text-secondary font-code-sm text-code-sm">
+              Est. Read: {insight.estimated_read_time || 5} min
+            </span>
+          </div>
+          {insight.related_topics && insight.related_topics.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {insight.related_topics.map((topic, idx) => (
+                <span
+                  key={idx}
+                  className="font-code-sm text-code-sm text-secondary bg-surface-container px-2 py-0.5 rounded"
+                >
+                  #{topic.replace("#", "")}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-        <div className="space-y-2 text-xs text-slate-300 leading-relaxed">
-          <p>
-            • Primary empirical evaluation is constrained to standard benchmarking distributions;
-            behavior under adversarial noise or extreme thermal constraints remains an open investigation.
-          </p>
-          <p>
-            • <strong>Opportunity:</strong> Candidate direction for follow-up work involves testing dynamic
-            quantization with low-precision floating point representations on edge hardware.
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* Collapsible Raw Source Text */}
       <div className="glass-panel p-6 rounded-2xl">
