@@ -2,6 +2,7 @@ import React from "react";
 import { AppShell } from "./components/layout/AppShell";
 import { DashboardPage } from "./pages/DashboardPage";
 import { TrendsPage } from "./pages/TrendsPage";
+import { TrendMethodologyPage } from "./pages/TrendMethodologyPage";
 import { ItemDetailPage } from "./pages/ItemDetailPage";
 import { EvaluationPage } from "./pages/EvaluationPage";
 import { useFeedStore } from "./store/useFeedStore";
@@ -12,6 +13,9 @@ export default function App() {
   const renderContent = () => {
     if (activeRoute === "/trends") {
       return <TrendsPage />;
+    }
+    if (activeRoute === "/methodology") {
+      return <TrendMethodologyPage />;
     }
     if (activeRoute.startsWith("/item/")) {
       return <ItemDetailPage itemId={selectedItemId} />;

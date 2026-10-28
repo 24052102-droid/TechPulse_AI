@@ -32,6 +32,7 @@ def get_db():
 def init_db():
     """Initialize all tables defined in Base metadata."""
     logger.info("Initializing database tables...")
+    import backend.app.models  # Ensure all ORM models are registered with Base.metadata
     Base.metadata.create_all(bind=engine)
     
     # If running PostgreSQL, ensure full text search vector & GIN index exist

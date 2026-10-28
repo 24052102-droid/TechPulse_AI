@@ -23,6 +23,7 @@ export function TopCommandBar() {
   const navItems = [
     { id: "/", label: "Feed" },
     { id: "/trends", label: "Trends" },
+    { id: "/methodology", label: "Methodology" },
     { id: "/evaluation", label: "Evaluation" },
   ];
 

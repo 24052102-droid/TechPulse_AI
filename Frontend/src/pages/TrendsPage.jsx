@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, RefreshCw, Flame } from "lucide-react";
+import { TrendingUp, RefreshCw, Flame, BookOpen, ArrowRight, Sparkles } from "lucide-react";
 import { api } from "../api/client";
 import { DomainActivityLineChart } from "../components/trends/DomainActivityLineChart";
 import { WeeklyComparisonBarChart } from "../components/trends/WeeklyComparisonBarChart";
 import { TechRadarMatrix } from "../components/trends/TechRadarMatrix";
+import { useFeedStore } from "../store/useFeedStore";
 
 export function TrendsPage() {
+  const setActiveRoute = useFeedStore((s) => s.setActiveRoute);
   const [window, setWindow] = useState("7d");
   const [trends, setTrends] = useState([]);
   const [allDomains, setAllDomains] = useState([]);
@@ -62,28 +64,39 @@ export function TrendsPage() {
             </p>
           </div>
 
-          {/* Time Window Switcher */}
-          <div className="inline-flex items-center p-0.5 bg-surface-container-low rounded-lg border border-outline-variant/40">
+          {/* Controls: Time Window & Methodology Link */}
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setWindow("7d")}
-              className={`px-3 py-1 rounded font-body-sm text-body-sm transition-colors ${
-                window === "7d"
-                  ? "bg-surface-container-lowest text-on-surface font-medium border border-outline-variant/30 shadow-sm"
-                  : "text-secondary hover:text-on-surface"
-              }`}
+              onClick={() => setActiveRoute("/methodology")}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-surface border border-outline-variant/50 text-xs font-medium text-primary hover:bg-surface-container transition-colors"
             >
-              7 Days Rolling
+              <BookOpen className="w-3.5 h-3.5 text-[#10B981]" />
+              <span>How Trends Are Judged</span>
+              <ArrowRight className="w-3 h-3 text-secondary" />
             </button>
-            <button
-              onClick={() => setWindow("30d")}
-              className={`px-3 py-1 rounded font-body-sm text-body-sm transition-colors ${
-                window === "30d"
-                  ? "bg-surface-container-lowest text-on-surface font-medium border border-outline-variant/30 shadow-sm"
-                  : "text-secondary hover:text-on-surface"
-              }`}
-            >
-              30 Days Rolling
-            </button>
+
+            <div className="inline-flex items-center p-0.5 bg-surface-container-low rounded-lg border border-outline-variant/40">
+              <button
+                onClick={() => setWindow("7d")}
+                className={`px-3 py-1 rounded font-body-sm text-body-sm transition-colors ${
+                  window === "7d"
+                    ? "bg-surface-container-lowest text-on-surface font-medium border border-outline-variant/30 shadow-sm"
+                    : "text-secondary hover:text-on-surface"
+                }`}
+              >
+                7 Days Rolling
+              </button>
+              <button
+                onClick={() => setWindow("30d")}
+                className={`px-3 py-1 rounded font-body-sm text-body-sm transition-colors ${
+                  window === "30d"
+                    ? "bg-surface-container-lowest text-on-surface font-medium border border-outline-variant/30 shadow-sm"
+                    : "text-secondary hover:text-on-surface"
+                }`}
+              >
+                30 Days Rolling
+              </button>
+            </div>
           </div>
         </div>
 

@@ -1,0 +1,32 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Frontend node_modules & build artifacts
+Frontend/node_modules/
+Frontend/dist/
+node_modules/
+
+# Local databases & logs
+*.db
+*.sqlite3
+techpulse.db
+*.log
+
+# Git & IDE configs
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+
+# Data dumps / large raw files not needed for container runtime
+Data/
+
