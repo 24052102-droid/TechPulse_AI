@@ -1,0 +1,17 @@
+{
+  "evaluation_date": "2026-10-27T21:42:06.857605+00:00",
+  "model": "facebook/bart-large-mnli",
+  "test_set_size": 1118,
+  "domain_distribution": {
+    "General Machine Learning": 300,
+    "Natural Language Processing": 249,
+    "Computer Vision": 235,
+    "IoT and Embedded Systems": 184,
+    "Security and Privacy": 80,
+    "Robotics": 70
+  },
+  "target_accuracy": 0.85,
+  "target_macro_f1": 0.8,
+  "status": "ground_truth_mapping_validated",
+  "note": "Full BART zero-shot eval to be run on Google Colab with GPU. Deterministic category\u2192domain mapping verified and saved."
+}

@@ -1,0 +1,76 @@
+{
+  "report_date": "2026-10-27T21:42:13.722079+00:00",
+  "phase": "Phase 1 \u2014 Model Training",
+  "models": {
+    "paper_impact": {
+      "model_version": "paper_impact_xgb_v1.0",
+      "xgb_cv_rmse": 0.09593249127245441,
+      "xgb_cv_rmse_std": 0.010077319572539102,
+      "xgb_cv_r2": 0.5963855752834735,
+      "xgb_holdout_rmse": 0.1348323334590048,
+      "xgb_holdout_r2": 0.5269043490082361,
+      "rf_cv_rmse": 0.08786405503144298,
+      "rf_cv_r2": 0.6621988114707561,
+      "rf_holdout_rmse": 0.12975519762066456,
+      "rf_holdout_r2": 0.5618625448753729,
+      "ridge_cv_rmse": 0.11166783987383985,
+      "ridge_holdout_rmse": 0.191855322354477,
+      "train_size": 894,
+      "test_size": 224,
+      "target_met": true,
+      "top_5_features": {
+        "max_author_hindex": 0.33083802461624146,
+        "cat_cs.LG": 0.08653941005468369,
+        "has_code_link": 0.08080155402421951,
+        "cat_cs.CV": 0.07152311503887177,
+        "cat_cs.CL": 0.058823857456445694
+      }
+    },
+    "repo_growth": {
+      "model_version": "repo_growth_xgb_v1.0",
+      "xgb_cv_rmse": 0.061707514027821944,
+      "xgb_cv_rmse_std": 0.0024557782299503964,
+      "xgb_cv_r2": 0.8048016623343994,
+      "xgb_holdout_rmse": 0.03587091816665645,
+      "xgb_holdout_r2": 0.5258900918672613,
+      "rf_cv_rmse": 0.06368796867370884,
+      "rf_cv_r2": 0.7919705391215264,
+      "rf_holdout_rmse": 0.036005417820902295,
+      "rf_holdout_r2": 0.522328032584122,
+      "ridge_cv_rmse": 0.10100506276772206,
+      "ridge_holdout_rmse": 0.051575034502371074,
+      "train_size": 6943,
+      "test_size": 1736,
+      "target_met": true,
+      "top_5_features": {
+        "days_since_commit": 0.2839902639389038,
+        "stars_log": 0.1962972730398178,
+        "lang_other": 0.06719717383384705,
+        "forks": 0.05488999933004379,
+        "lang_TypeScript": 0.03986554220318794
+      }
+    },
+    "domain_trend": {
+      "model_version": "domain_trend_logreg_v1.0",
+      "accuracy": 0.7416666666666667,
+      "f1_score": 0.16216216216216217
+    }
+  },
+  "classification": {
+    "evaluation_date": "2026-10-27T21:42:06.857605+00:00",
+    "model": "facebook/bart-large-mnli",
+    "test_set_size": 1118,
+    "domain_distribution": {
+      "General Machine Learning": 300,
+      "Natural Language Processing": 249,
+      "Computer Vision": 235,
+      "IoT and Embedded Systems": 184,
+      "Security and Privacy": 80,
+      "Robotics": 70
+    },
+    "target_accuracy": 0.85,
+    "target_macro_f1": 0.8,
+    "status": "ground_truth_mapping_validated",
+    "note": "Full BART zero-shot eval to be run on Google Colab with GPU. Deterministic category\u2192domain mapping verified and saved."
+  }
+}

@@ -1,0 +1,29 @@
+# ATIP (TechPulse AI) — CODEOWNERS & Probation Contribution Mapping
+# IoT Lab — Machine Learning · Campus 25, KIIT University
+
+# POC & ML Lead
+models/                         @sagnik-pramanik
+ml_reports/                     @sagnik-pramanik
+backend/app/ml/                 @sagnik-pramanik
+
+# Data Engineering & MLOps
+Data/                           @udit-kumar-jaiswal
+backend/app/services/           @udit-kumar-jaiswal
+backend/app/tasks/ingest.py     @udit-kumar-jaiswal
+backend/app/tasks/enrich.py     @udit-kumar-jaiswal
+backend/app/tasks/trends.py     @udit-kumar-jaiswal
+
+# Backend & Infrastructure
+backend/app/core/               @shadwalsr
+backend/app/api/                @shadwalsr
+backend/app/models/             @shadwalsr
+backend/app/schemas/            @shadwalsr
+backend/app/main.py             @shadwalsr
+backend/app/tasks/celery_app.py @shadwalsr
+backend/app/tasks/celery_config.py @shadwalsr
+
+# Frontend Components & UI (Pragati Singh — Probation Evaluation)
+Frontend/src/components/        @pragati-singh
+Frontend/src/pages/             @pragati-singh
+Frontend/src/store/             @pragati-singh
+Frontend/src/api/               @pragati-singh
