@@ -8,6 +8,21 @@ export default {
   theme: {
     extend: {
       colors: {
+        obsidian: {
+          DEFAULT: "#0f1117",
+          50: "#f6f7f9",
+          100: "#eceef2",
+          200: "#d5d9e2",
+          300: "#b0b8c8",
+          400: "#8491aa",
+          500: "#63718e",
+          600: "#4e5973",
+          700: "#3f475d",
+          800: "#1e222b",
+          850: "#161922",
+          900: "#0f1117",
+          950: "#0a0b0e",
+        },
         "surface": "#f9f9f9",
         "surface-container-low": "#f3f3f3",
         "surface-container": "#eeeeee",

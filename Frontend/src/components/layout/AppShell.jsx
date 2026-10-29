@@ -2,8 +2,10 @@ import React from "react";
 import { TopCommandBar } from "./TopCommandBar";
 import { SidebarDomainFilter } from "./SidebarDomainFilter";
 import { AssistantDrawer } from "./AssistantDrawer";
+import { useFeedStore } from "../../store/useFeedStore";
 
 export function AppShell({ children }) {
+  const { isAssistantOpen, toggleAssistant } = useFeedStore();
   return (
     <div className="bg-background font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col justify-between">
       <div>
@@ -63,6 +65,26 @@ export function AppShell({ children }) {
           </div>
         </div>
       </footer>
+
+      {/* Floating AI Assistant Trigger (visible when drawer is closed) */}
+      {!isAssistantOpen && (
+        <button
+          onClick={toggleAssistant}
+          aria-label="Open Technical RAG Assistant"
+          className="fixed bottom-6 right-6 z-30 flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-[#0c0e14] text-white border border-emerald-500/50 shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:border-emerald-400 hover:shadow-[0_0_20px_rgba(16,185,129,0.35)] hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+        >
+          <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping absolute"></span>
+            <span className="text-xs">✦</span>
+          </div>
+          <span className="text-xs font-semibold tracking-wide text-slate-100 group-hover:text-white">
+            Ask AI Assistant
+          </span>
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            RAG
+          </span>
+        </button>
+      )}
 
       {/* Assistant Drawer */}
       <AssistantDrawer />

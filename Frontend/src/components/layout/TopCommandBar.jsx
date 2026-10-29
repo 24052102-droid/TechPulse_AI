@@ -106,9 +106,10 @@ export function TopCommandBar() {
           <button
             onClick={toggleAssistant}
             type="button"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-on-primary rounded-lg font-body-sm text-body-sm hover:bg-surface-tint transition-colors"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0f1117] text-white border border-emerald-500/50 hover:border-emerald-400 rounded-lg font-body-sm text-body-sm font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.15)] hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all cursor-pointer group"
           >
-            <span className="font-code-sm text-code-sm">✦</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="font-code-sm text-emerald-400 group-hover:text-emerald-300">✦</span>
             <span>Ask AI</span>
           </button>
 
