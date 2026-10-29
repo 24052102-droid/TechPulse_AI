@@ -28,4 +28,3 @@ jobs:
           else
             echo "✅ Backend is warm and healthy (200 OK)."
           fi
-

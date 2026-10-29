@@ -1,6 +1,9 @@
 {
   "buildCommand": "cd Frontend && npm install && npm run build",
   "outputDirectory": "Frontend/dist",
+  "env": {
+    "VITE_API_BASE_URL": "https://techpulse-backend.onrender.com"
+  },
   "rewrites": [
     {
       "source": "/(.*)",
@@ -8,4 +11,3 @@
     }
   ]
 }
-

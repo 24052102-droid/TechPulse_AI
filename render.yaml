@@ -15,16 +15,22 @@ services:
         value: production
       - key: DEBUG
         value: "false"
+      # ── Required: Set these in Render Dashboard → Environment ──
       - key: DATABASE_URL
-        sync: false
+        sync: false   # Supabase PostgreSQL URL (see DEPLOYMENT.md)
       - key: REDIS_URL
-        sync: false
+        sync: false   # Upstash Redis URL (optional — in-memory fallback used if absent)
       - key: GROQ_API_KEY
-        sync: false
+        sync: false   # Required for AI insight synthesis
       - key: GITHUB_PAT
-        sync: false
+        sync: false   # Optional but recommended for higher GitHub rate limits
+      # ── CORS: update with your Vercel frontend URL ──
+      - key: CORS_ORIGINS
+        value: '["https://techpulse-ai.vercel.app","http://localhost:5173","http://localhost:3000"]'
 
   # ─── Celery Ingestion & ML Worker ───
+  # NOTE: Only enable this if you have REDIS_URL configured.
+  # Free Render accounts can omit this — use GitHub Actions daily-ingest.yml instead.
   - type: worker
     name: techpulse-celery-worker
     runtime: python
@@ -42,4 +48,21 @@ services:
       - key: GROQ_API_KEY
         sync: false
       - key: GITHUB_PAT
+        sync: false
+
+  # ─── Celery Beat Scheduler (Daily Cron Pipelines) ───
+  # NOTE: Only enable this if you have REDIS_URL configured.
+  - type: worker
+    name: techpulse-celery-beat
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A backend.app.tasks.celery_app.celery_app beat --loglevel=info --scheduler celery.beat:PersistentScheduler
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: ENVIRONMENT
+        value: production
+      - key: REDIS_URL
+        sync: false
+      - key: DATABASE_URL
         sync: false

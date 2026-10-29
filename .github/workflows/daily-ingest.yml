@@ -1,0 +1,106 @@
+name: Daily Data Refresh (arXiv · GitHub · Hacker News)
+
+on:
+  schedule:
+    # Run daily at 00:05 UTC (05:35 IST) — after midnight when arXiv publishes new papers
+    - cron: "5 0 * * *"
+  workflow_dispatch:
+    inputs:
+      max_results:
+        description: "Max items to fetch per source (default: 30)"
+        required: false
+        default: "30"
+
+jobs:
+  # ─── Job 1: Trigger live pipeline via POST to /api/admin/refresh ───
+  refresh-via-api:
+    name: Trigger Pipeline via Render API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate secrets
+        run: |
+          if [ -z "${{ secrets.RENDER_BACKEND_URL }}" ]; then
+            echo "::error::RENDER_BACKEND_URL secret is not set. Add it in GitHub → Settings → Secrets."
+            exit 1
+          fi
+
+      - name: Trigger arXiv + GitHub + HN Ingestion
+        id: refresh
+        run: |
+          MAX="${{ github.event.inputs.max_results || '30' }}"
+          BACKEND="${{ secrets.RENDER_BACKEND_URL }}"
+          CLEAN_URL="${BACKEND%/}"
+          ENDPOINT="${CLEAN_URL}/api/admin/refresh?max_results=${MAX}"
+
+          echo "🚀 Triggering daily data refresh..."
+          echo "   Endpoint: ${ENDPOINT}"
+          echo "   Max results per source: ${MAX}"
+
+          HTTP_STATUS=$(curl -s -o /tmp/response.json \
+            -w "%{http_code}" \
+            --max-time 600 \
+            -X POST \
+            -H "Content-Type: application/json" \
+            "${ENDPOINT}" || echo "000")
+
+          echo "HTTP Status: ${HTTP_STATUS}"
+          cat /tmp/response.json || true
+
+          if [ "${HTTP_STATUS}" -ne 200 ]; then
+            echo "::error::Refresh endpoint returned HTTP ${HTTP_STATUS}"
+            exit 1
+          fi
+
+          echo "✅ Daily refresh completed successfully."
+
+      - name: Parse & log pipeline summary
+        if: success()
+        run: |
+          echo "=== Pipeline Summary ==="
+          python3 -c "
+          import json, sys
+          try:
+              with open('/tmp/response.json') as f:
+                  data = json.load(f)
+              summary = data.get('summary', {})
+              stages = summary.get('stages', {})
+              for stage, info in stages.items():
+                  print(f'  {stage}: {info}')
+              duration = summary.get('total_duration_seconds', 'n/a')
+              print(f'  total_duration: {duration}s')
+          except Exception as e:
+              print(f'Could not parse summary: {e}')
+          " || true
+
+  # ─── Job 2: Verify data was actually updated ───
+  verify-health:
+    name: Verify Backend Health After Refresh
+    runs-on: ubuntu-latest
+    needs: refresh-via-api
+    steps:
+      - name: Health Check
+        run: |
+          BACKEND="${{ secrets.RENDER_BACKEND_URL }}"
+          CLEAN_URL="${BACKEND%/}"
+          echo "Pinging ${CLEAN_URL}/api/health..."
+          HTTP_STATUS=$(curl -s -o /tmp/health.json \
+            -w "%{http_code}" \
+            --max-time 30 \
+            "${CLEAN_URL}/api/health" || echo "000")
+          echo "Health check status: ${HTTP_STATUS}"
+          python3 -c "
+          import json
+          try:
+              with open('/tmp/health.json') as f:
+                  data = json.load(f)
+              print(f'  Database: {data[\"database\"]}')
+              print(f'  Cache: {data[\"cache\"]}')
+              print(f'  Total items in DB: {data[\"database\"].get(\"total_items\", \"?\")}')
+          except Exception as e:
+              print(f'Could not parse health: {e}')
+          " || true
+          if [ "${HTTP_STATUS}" -ne 200 ]; then
+            echo "::warning::Health check returned HTTP ${HTTP_STATUS}"
+          else
+            echo "✅ Backend is healthy after refresh."
+          fi
